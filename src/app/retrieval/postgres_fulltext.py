@@ -58,7 +58,7 @@ class PostgresFullTextRetriever:
                                plainto_tsquery('english', :query)
                            ) AS rank
                     FROM langchain_pg_embedding
-                    WHERE (:collection_id::uuid IS NULL OR collection_id = :collection_id)
+                    WHERE (CAST(:collection_id AS uuid) IS NULL OR collection_id = :collection_id)
                       AND (to_tsvector('english', document) @@ plainto_tsquery('english', :query))
                     ORDER BY rank DESC
                     LIMIT :top_k
