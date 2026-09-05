@@ -15,7 +15,7 @@ COPY pyproject.toml uv.lock* README.md ./
 COPY src/ src/
 
 # Install production dependencies only
-RUN uv sync --frozen --no-dev --no-editable
+RUN uv sync --no-dev --no-editable
 
 # ─────────────────────────────────────────────────────────────
 # Stage 2: Slim runtime
