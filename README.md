@@ -39,6 +39,14 @@ Legal RAG QA answers natural-language questions with **provable citations** (`[S
 - [Testing & Quality Assurance](#-testing--quality-assurance)
 - [Docker Deployment](#-docker-deployment)
 - [☁️ Render Deployment](#️-render-deployment)
+- [🚀 AWS EC2 & Coolify Self-Hosted Deployment](#-aws-ec2--coolify-self-hosted-deployment)
+  - [1. EC2 Instance & Firewall Prerequisites](#1-ec2-instance--firewall-prerequisites)
+  - [2. Swap File Configuration (Critical for t2.micro)](#2-swap-file-configuration-critical-for-t2micro)
+  - [3. Coolify Installation](#3-coolify-installation)
+  - [4. Deploying Legal RAG QA via Coolify Dashboard](#4-deploying-legal-rag-qa-via-coolify-dashboard)
+  - [5. Environment Variables Setup](#5-environment-variables-setup)
+  - [6. Healthcheck & Domain Configuration](#6-healthcheck--domain-configuration)
+  - [7. Verification & Production Testing](#7-verification--production-testing)
 - [License](#-license)
 
 ---
@@ -827,6 +835,223 @@ If you want to deploy just the standalone API web service:
 
 ---
 
+## 🚀 AWS EC2 & Coolify Self-Hosted Deployment
+
+This guide covers deploying the entire Legal RAG QA platform on a **100% Free-Tier AWS EC2 instance (`t2.micro`)** managed with **Coolify** (open-source PaaS) connected to your serverless **Neon PostgreSQL (pgvector)** database.
+
+```mermaid
+flowchart TD
+    Client([Client / Browser / Postman]) -->|Port 80 / 443| Traefik[Coolify Traefik Proxy]
+    Traefik -->|Internal Route: 8000| API[FastAPI Web Service]
+    API -->|Port 6379| Redis[(Redis 7 Cache & Broker)]
+    API -->|Port 9000| MinIO[(MinIO S3 Blob Storage)]
+    Worker[Celery Ingestion Worker] -->|Poll Queue| Redis
+    Worker -->|Store Chunks| Neon[(Neon Serverless pgvector)]
+    API -->|Query Vectors| Neon
+```
+
+---
+
+### 1. EC2 Instance & Firewall Prerequisites
+
+1. Launch an AWS EC2 instance with the following specifications:
+   * **AMI**: Ubuntu Server 24.04 LTS (x86_64)
+   * **Instance Type**: `t2.micro` (AWS Free Tier eligible: 1 vCPU, 1 GB RAM)
+   * **Storage**: 30 GiB gp3 (maximum allowed within AWS Free Tier)
+   * **Key Pair**: Download your `.pem` key (e.g., `coolify-key.pem`) and restrict permissions:
+     ```bash
+     chmod 400 coolify-key.pem
+     ```
+
+2. Configure your EC2 **Security Group** with the following **Inbound Rules**:
+
+| Type | Port Range | Protocol | Source | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **SSH** | `22` | TCP | `My IP` (or `0.0.0.0/0`) | Secure terminal access |
+| **HTTP** | `80` | TCP | `0.0.0.0/0` | Coolify Traefik reverse proxy & SSL challenges |
+| **HTTPS** | `443` | TCP | `0.0.0.0/0` | Secure public API traffic (Let's Encrypt SSL) |
+| **Custom TCP** | `8000` | TCP | `0.0.0.0/0` | Coolify Management Web Dashboard |
+| **Custom TCP** | `8001` | TCP | `0.0.0.0/0` | Direct FastAPI host port access (optional) |
+
+---
+
+### 2. Swap File Configuration (Critical for t2.micro)
+
+> [!IMPORTANT]
+> The `t2.micro` instance has only 1 GB of physical RAM. Running Docker builds and multi-container workloads without swap will trigger Linux Out-Of-Memory (OOM) kills. A **4 GB swap file** provides the necessary memory buffer for smooth builds and zero crashes.
+
+SSH into your EC2 server and configure swap:
+
+```bash
+ssh -i coolify-key.pem ubuntu@<YOUR_EC2_PUBLIC_IP>
+
+# Allocate 4GB swap space
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
+# Persist swap across server reboots
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# Verify swap is active (Swap total should report 4.0Gi)
+free -h
+```
+
+---
+
+### 3. Coolify Installation
+
+Install Coolify with the official automated installation script:
+
+```bash
+curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+```
+
+Once installation finishes (approx. 2 minutes), you will see:
+```text
+Coolify is ready!
+You can access Coolify through your Public IP: http://<YOUR_EC2_PUBLIC_IP>:8000
+```
+
+1. Open your browser and navigate to `http://<YOUR_EC2_PUBLIC_IP>:8000`.
+2. Register your administrative account (Name, Email, Password).
+3. On the onboarding screen, select **"This machine"** (localhost) as the target deployment server.
+
+---
+
+### 4. Deploying Legal RAG QA via Coolify Dashboard
+
+1. In Coolify, navigate to **Projects** (left sidebar) ➔ Click **`default`** ➔ Click **`production`**.
+2. Click **`+ Add Resource`** (or **`+ New`**).
+3. Select **Public Repository** (or GitHub).
+4. Fill in your repository details:
+   * **Repository URL**: `https://github.com/PPC2001/legal-rag-intelligence.git`
+   * **Branch**: `master`
+   * **Build Pack**: **`Docker Compose`**
+5. Click **Check repository** / **Continue**. Coolify will detect [`docker-compose.yaml`](docker-compose.yaml).
+
+---
+
+### 5. Environment Variables Setup
+
+In your application's settings in Coolify, open the **Environment Variables** tab and add the following variables:
+
+| Variable | Recommended Production Value | Description |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | `postgresql://neondb_owner:...@ep-...neon.tech/vector_db?sslmode=require&channel_binding=require` | Your Neon serverless PostgreSQL connection string |
+| `DEFAULT_LLM_PROVIDER` | `groq` | Primary LLM provider (`groq`, `gemini`, `openai`) |
+| `DEFAULT_LLM_MODEL` | `qwen/qwen3.8-27b` *(or `llama-3.3-70b-versatile`)* | Primary generation model name |
+| `GROQ_API_KEY` | `gsk_...` | Groq API Key |
+| `GOOGLE_API_KEY` | `AIza...` | Google Gemini API Key (used for embeddings) |
+| `EMBEDDING_PROVIDER` | `google` | Embedding engine |
+| `EMBEDDING_MODEL` | `models/gemini-embedding-001` | 768-dimensional dense embedding model |
+| `EMBEDDING_DIMENSIONS` | `768` | Matches Neon vector table dimensions |
+| `SPARSE_SEARCH_BACKEND` | `postgres` | Native GIN tsvector keyword search (0 MB Python RAM) |
+| `ENABLE_RERANKER` | `true` | FlashRank neural cross-encoder reranking on CPU |
+| `ENABLE_SEMANTIC_CACHE`| `true` | Redis cosine similarity cache (<10ms repeat responses) |
+| `S3_ACCESS_KEY` | `minioadmin` | MinIO object storage root access key |
+| `S3_SECRET_KEY` | `minioadmin123` | MinIO object storage root secret key |
+| `S3_BUCKET_NAME` | `legal-documents` | Default bucket name for document uploads |
+
+Click **Save**, then click the **Deploy** button in the top-right corner.
+
+---
+
+### 6. Healthcheck & Domain Configuration
+
+#### A. Turn Coolify Healthcheck Indicator Green:
+1. In your application dashboard, click the **Healthcheck** tab.
+2. Toggle **Enabled** to **ON**.
+3. Set the parameters:
+   * **Path**: `/api/v1/health`
+   * **Port**: `8000` *(internal container port)*
+   * **Method**: `GET`
+   * **Expected Status Code**: `200`
+4. Click **Save**. The status indicator will turn **`● Healthcheck Healthy` (Green)**!
+
+#### B. Configure Public Domain Routing (Traefik):
+1. In your application dashboard, click the **General** tab.
+2. Under **Domains**, provide a public domain or wildcard IP domain:
+   ```text
+   http://<YOUR_EC2_PUBLIC_IP>.sslip.io
+   ```
+   *(For example: `http://15.252.12.249.sslip.io`)*
+3. Click **Save**. Coolify's Traefik proxy on port 80 will instantly route public traffic to your FastAPI app!
+
+---
+
+### 7. Verification & Production Testing
+
+#### 1. System Healthcheck
+```bash
+curl -i http://<YOUR_EC2_PUBLIC_IP>:8001/api/v1/health
+```
+**Expected Response (`200 OK`)**:
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "environment": "DEV",
+  "available_providers": ["gemini", "groq"],
+  "database_connected": true
+}
+```
+
+#### 2. Interactive Swagger UI
+Open your browser and navigate to:
+```text
+http://<YOUR_EC2_PUBLIC_IP>.sslip.io/docs
+# or via direct host port:
+http://<YOUR_EC2_PUBLIC_IP>:8001/docs
+```
+
+#### 3. Ask a Grounded Question (`POST /api/v1/ask`)
+```bash
+curl -X POST "http://<YOUR_EC2_PUBLIC_IP>:8001/api/v1/ask" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What is the probation period policy?"}'
+```
+**Live Output with Strict Grounding & Citations**:
+```json
+{
+  "answer": "Based on the provided documents, the probationary period policy is as follows:\n\n* Duration: New employees are subject to a probationary period of ninety (90) calendar days from the date of hire [Source: employee_handbook.txt, Page 1].\n* Evaluation and Termination: During this period, performance is evaluated, and employment may be terminated without the standard notice period [Source: employee_handbook.txt, Page 1].\n* Benefits Eligibility: Eligibility for benefits begins on the first day following the successful completion of the probationary period [Source: employee_handbook.txt, Page 1].",
+  "sources": [
+    {
+      "document": "employee_handbook.txt",
+      "page": 0,
+      "relevance_score": 0.0018
+    }
+  ],
+  "sufficient_context": true
+}
+```
+
+#### 4. Asynchronous Document Ingestion via Celery (`POST /api/v1/documents/async`)
+Upload a PDF or DOCX file to be processed asynchronously in the background:
+```bash
+curl -X POST "http://<YOUR_EC2_PUBLIC_IP>:8001/api/v1/documents/async" \
+     -F "file=@sample_policy.pdf"
+```
+**Response**:
+```json
+{
+  "task_id": "c6a1e389-9b43-4c91-9e23-389d41209b55",
+  "filename": "sample_policy.pdf",
+  "storage_key": "data/uploads/sample_policy.pdf",
+  "status": "PENDING",
+  "message": "Document uploaded and queued for background ingestion."
+}
+```
+
+Check ingestion progress:
+```bash
+curl http://<YOUR_EC2_PUBLIC_IP>:8001/api/v1/documents/tasks/c6a1e389-9b43-4c91-9e23-389d41209b55
+```
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License**.
+
