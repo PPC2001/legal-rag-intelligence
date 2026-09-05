@@ -441,7 +441,7 @@ DEBUG=true
 LOG_LEVEL=INFO
 
 # Neon PostgreSQL + pgvector connection string
-DATABASE_URL=postgresql://user:password@ep-xyz.us-east-2.aws.neon.tech/vector_db?sslmode=require
+DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
 
 # Default LLM Provider & Model
 DEFAULT_LLM_PROVIDER=groq
@@ -789,7 +789,7 @@ The repository includes a production-ready Render Blueprint specification ([`ren
    - **`legal-rag-worker`** — Celery Background Ingestion Worker
    - **`legal-rag-redis`** — Free Managed Redis instance (used for semantic caching and task queue)
 5. Fill in the required secrets under **Environment Variables**:
-   - `DATABASE_URL`: Your Neon PostgreSQL connection string (`postgresql://user:pass@ep-...neon.tech/vector_db?sslmode=require`)
+   - `DATABASE_URL`: Your database connection URI (`postgresql://<user>:<password>@<host>/<database>?sslmode=require`)
    - `GROQ_API_KEY`: Your Groq API key (`gsk_...`)
    - `GOOGLE_API_KEY`: Your Google Gemini API key (`AIza...`)
 6. Click **Apply**. Render will build the container and deploy your live public URL (e.g. `https://legal-rag-api.onrender.com`).
@@ -817,7 +817,7 @@ If you want to deploy just the standalone API web service:
    DEBUG=false
    LOG_LEVEL=INFO
    CORS_ORIGINS=["*"]
-   DATABASE_URL=postgresql://user:password@ep-...neon.tech/vector_db?sslmode=require
+   DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
    DEFAULT_LLM_PROVIDER=groq
    DEFAULT_LLM_MODEL=qwen/qwen3.8-27b
    GROQ_API_KEY=gsk_...
@@ -939,7 +939,7 @@ In your application's settings in Coolify, open the **Environment Variables** ta
 
 | Variable | Recommended Production Value | Description |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | `postgresql://neondb_owner:...@ep-...neon.tech/vector_db?sslmode=require&channel_binding=require` | Your Neon serverless PostgreSQL connection string |
+| `DATABASE_URL` | `postgresql://<user>:<password>@<host>/<database>?sslmode=require` | Your PostgreSQL / Neon vector database URI |
 | `DEFAULT_LLM_PROVIDER` | `groq` | Primary LLM provider (`groq`, `gemini`, `openai`) |
 | `DEFAULT_LLM_MODEL` | `qwen/qwen3.8-27b` *(or `llama-3.3-70b-versatile`)* | Primary generation model name |
 | `GROQ_API_KEY` | `gsk_...` | Groq API Key |
@@ -950,8 +950,8 @@ In your application's settings in Coolify, open the **Environment Variables** ta
 | `SPARSE_SEARCH_BACKEND` | `postgres` | Native GIN tsvector keyword search (0 MB Python RAM) |
 | `ENABLE_RERANKER` | `true` | FlashRank neural cross-encoder reranking on CPU |
 | `ENABLE_SEMANTIC_CACHE`| `true` | Redis cosine similarity cache (<10ms repeat responses) |
-| `S3_ACCESS_KEY` | `minioadmin` | MinIO object storage root access key |
-| `S3_SECRET_KEY` | `minioadmin123` | MinIO object storage root secret key |
+| `S3_ACCESS_KEY` | `minio_access_key` | MinIO object storage root access key |
+| `S3_SECRET_KEY` | `minio_secret_key` | MinIO object storage root secret key |
 | `S3_BUCKET_NAME` | `legal-documents` | Default bucket name for document uploads |
 
 Click **Save**, then click the **Deploy** button in the top-right corner.
