@@ -60,7 +60,6 @@ services:
         condition: service_healthy
     healthcheck:
       disable: true
-    exclude_from_hc: true
     restart: unless-stopped
 
   # ── 3. Redis (Task Broker & Semantic Cache) ──────────────────
