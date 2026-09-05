@@ -37,22 +37,27 @@ class IngestionService:
         self._chunker = DocumentChunker()
         self._ingested_hashes: set[str] = set()
 
-    def ingest_file(self, file_path: str | Path) -> IngestionResponse:
+    def ingest_file(
+        self,
+        file_path: str | Path,
+        original_filename: str | None = None,
+    ) -> IngestionResponse:
         """Load, chunk, and store a single document.
 
         Returns an ``IngestionResponse`` with status and chunk count.
         Skips files that have already been ingested (by content hash).
         """
         path = Path(file_path)
+        display_name = original_filename or path.name
         settings = get_settings()
         doc_hash = _compute_file_hash(path)
 
         # Deduplication
         if doc_hash in self._ingested_hashes:
-            logger.info("Skipping duplicate document: %s", path.name)
+            logger.info("Skipping duplicate document: %s", display_name)
             return IngestionResponse(
                 document_id=doc_hash,
-                filename=path.name,
+                filename=display_name,
                 chunks_created=0,
                 status="skipped",
                 message="Document already ingested (identical content hash).",
@@ -66,7 +71,7 @@ class IngestionService:
             if not raw_docs:
                 return IngestionResponse(
                     document_id=doc_hash,
-                    filename=path.name,
+                    filename=display_name,
                     chunks_created=0,
                     status="error",
                     message="No readable text found in the document.",
@@ -75,10 +80,12 @@ class IngestionService:
             # 2. Chunk
             chunks = self._chunker.chunk_documents(raw_docs)
 
-            # 3. Add document_id to every chunk's metadata
+            # 3. Add document_id and correct filename to every chunk's metadata
             for chunk in chunks:
                 chunk.metadata["document_id"] = doc_hash
                 chunk.metadata["collection"] = settings.collection_name
+                chunk.metadata["source"] = display_name
+                chunk.metadata["filename"] = display_name
 
             # 4. Store in PGVector
             self._vector_store.add_documents(chunks)
@@ -88,24 +95,24 @@ class IngestionService:
 
             logger.info(
                 "Ingested %s → %d chunks in %.1f ms",
-                path.name,
+                display_name,
                 len(chunks),
                 elapsed_ms,
             )
 
             return IngestionResponse(
                 document_id=doc_hash,
-                filename=path.name,
+                filename=display_name,
                 chunks_created=len(chunks),
                 status="success",
                 message=f"Ingested in {elapsed_ms:.0f} ms.",
             )
 
         except Exception as exc:
-            logger.exception("Failed to ingest %s", path.name)
+            logger.exception("Failed to ingest %s", display_name)
             return IngestionResponse(
                 document_id=doc_hash,
-                filename=path.name,
+                filename=display_name,
                 chunks_created=0,
                 status="error",
                 message=str(exc),

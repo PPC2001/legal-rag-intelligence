@@ -33,8 +33,8 @@ def ingest_document_task(self, file_key_or_path: str, filename: str) -> dict:
         tmp_path = Path(tmp_file.name)
 
     try:
-        # 3. Ingest document
-        response = ingestion_service.ingest_file(tmp_path)
+        # 3. Ingest document with original filename
+        response = ingestion_service.ingest_file(tmp_path, original_filename=filename)
         logger.info(
             "Completed task %s: %s (%d chunks, status=%s)",
             self.request.id,
@@ -42,6 +42,9 @@ def ingest_document_task(self, file_key_or_path: str, filename: str) -> dict:
             response.chunks_created,
             response.status,
         )
+        if response.status == "error":
+            raise RuntimeError(f"Ingestion failed: {response.message}")
+
         return {
             "task_id": self.request.id,
             "document_id": response.document_id,

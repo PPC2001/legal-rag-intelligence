@@ -7,6 +7,7 @@ creating, connecting to, and querying the Neon PostgreSQL vector store.
 from __future__ import annotations
 
 import logging
+import time
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -70,11 +71,55 @@ class VectorStoreManager:
         """Raw PGVector store (for advanced usage)."""
         return self._store
 
-    def add_documents(self, documents: list[Document]) -> list[str]:
-        """Embed and store *documents*, returning their IDs."""
-        ids = self._store.add_documents(documents)
-        logger.info("Stored %d chunks in PGVector", len(documents))
-        return ids
+    def add_documents(self, documents: list[Document], batch_size: int = 25) -> list[str]:
+        """Embed and store *documents* in batches with retry on rate limits."""
+        if not documents:
+            return []
+
+        all_ids: list[str] = []
+        total = len(documents)
+
+        for i in range(0, total, batch_size):
+            batch = documents[i : i + batch_size]
+            max_retries = 5
+            for attempt in range(max_retries):
+                try:
+                    ids = self._store.add_documents(batch)
+                    all_ids.extend(ids)
+                    logger.info(
+                        "Stored chunks %d-%d of %d in PGVector",
+                        i + 1,
+                        min(i + batch_size, total),
+                        total,
+                    )
+                    # Gentle pacing between batches to prevent quota bursts
+                    if i + batch_size < total:
+                        time.sleep(1.0)
+                    break
+                except Exception as exc:
+                    exc_str = str(exc)
+                    if "429" in exc_str or "RESOURCE_EXHAUSTED" in exc_str:
+                        wait_seconds = 15.0 * (attempt + 1)
+                        logger.warning(
+                            "Rate limit hit on chunks %d-%d. Retrying in %.1fs (attempt %d/%d)...",
+                            i + 1,
+                            min(i + batch_size, total),
+                            wait_seconds,
+                            attempt + 1,
+                            max_retries,
+                        )
+                        time.sleep(wait_seconds)
+                    else:
+                        logger.error(
+                            "Failed storing chunks %d-%d: %s",
+                            i + 1,
+                            min(i + batch_size, total),
+                            exc,
+                        )
+                        raise
+
+        logger.info("Stored all %d chunks in PGVector successfully", total)
+        return all_ids
 
     def similarity_search(
         self,
