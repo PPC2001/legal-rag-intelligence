@@ -1,0 +1,344 @@
+{
+  "info": {
+    "name": "Legal RAG QA — API Collection",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Comprehensive Postman collection for testing Legal RAG QA Document Intelligence service.\n\nIncludes Health, Document Ingestion, Retrieval, and Question Answering endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "sample-doc-id",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Application Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Returns application status, version, active environment, and available LLM providers."
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Probe (DB Connectivity)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health", "ready"]
+            },
+            "description": "Deep health check verifying connectivity to Neon PGVector."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List Ingested Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "documents"]
+            },
+            "description": "Lists all documents currently indexed in PGVector along with chunk counts."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload & Ingest Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "data/samples/employee_handbook.txt",
+                  "description": "Select a PDF, DOCX, or TXT file to upload and index"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/ingest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "documents", "ingest"]
+            },
+            "description": "Upload a legal or policy document (PDF, DOCX, TXT) to chunk, embed, and store in PGVector."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Document Async (1M Scale / Celery)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select contract file (PDF, DOCX, TXT) to upload to MinIO and ingest asynchronously"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/upload-async",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "documents", "upload-async"]
+            },
+            "description": "Uploads a document to MinIO / S3 storage and enqueues background chunking and embedding via Celery workers."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Ingestion Task Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "documents", "tasks", "{{taskId}}"]
+            },
+            "description": "Returns current status (PENDING, STARTED, SUCCESS, FAILURE) and chunk statistics for a background ingestion task."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Document by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "documents", "{{documentId}}"]
+            },
+            "description": "Deletes all chunks belonging to a document_id and rebuilds the BM25 index."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Question Answering (RAG)",
+      "item": [
+        {
+          "name": "Ask Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the notice period for junior staff and senior staff?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ask"]
+            },
+            "description": "Submit a legal or policy question. The answer is grounded strictly in ingested documents with citations."
+          },
+          "response": []
+        },
+        {
+          "name": "Ask Question (Probationary Period)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What are the probationary period rules?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ask"]
+            },
+            "description": "Ask another document question grounded in the employee handbook."
+          },
+          "response": []
+        },
+        {
+          "name": "Ask Question - Streaming SSE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the annual leave allowance?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ask/stream",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ask", "stream"]
+            },
+            "description": "Stream the answer token-by-token via Server-Sent Events (SSE)."
+          },
+          "response": []
+        },
+        {
+          "name": "Ask Question - Refusal Test (Out-of-domain)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the capital of France and how far is it from the Moon?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ask"]
+            },
+            "description": "Demonstrates strict hallucination guard: refuses when question is not answered by documents."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System & OpenAPI",
+      "item": [
+        {
+          "name": "OpenAPI Specification",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["openapi.json"]
+            },
+            "description": "Fetches the full OpenAPI 3.1 JSON schema generated by FastAPI."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

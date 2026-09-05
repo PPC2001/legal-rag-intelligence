@@ -1,0 +1,80 @@
+[project]
+name = "legal-rag-qa"
+version = "0.1.0"
+description = "Production-grade RAG system for legal/HR/insurance document intelligence"
+readme = "README.md"
+authors = [
+    { name = "Pratik Chavan", email = "pratik@capitalnumbers.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    # LangChain Core
+    "langchain>=1.4,<2.0",
+    "langchain-core>=1.6,<2.0",
+    "langchain-text-splitters>=0.3",
+
+    # LLM Providers
+    "langchain-openai>=1.0,<2.0",
+    "langchain-google-genai>=4.0,<5.0",
+    "langchain-anthropic>=1.0,<2.0",
+    "langchain-groq>=1.0,<2.0",
+    "langchain-mistralai>=1.0,<2.0",
+
+    # Vector Store — PostgreSQL + pgvector (Neon)
+    "langchain-postgres>=0.0.13",
+    "psycopg[binary]>=3.2,<4.0",
+
+    # BM25 Keyword Search
+    "rank-bm25>=0.2,<1.0",
+
+    # API Framework
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.34,<1.0",
+    "python-multipart>=0.0.18,<1.0",
+
+    # Configuration
+    "pydantic-settings>=2.7,<3.0",
+
+    # Document Processing
+    "pypdf>=5.0,<6.0",
+    "python-docx>=1.1,<2.0",
+
+    # Scalability & Open-Source Stack
+    "redis>=5.2.0,<6.0",
+    "celery>=5.4.0,<6.0",
+    "boto3>=1.35.0,<2.0",
+    "flashrank>=0.2.9,<1.0",
+    "langfuse>=2.50.0,<3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "httpx>=0.28,<1.0",
+    "ruff>=0.8,<1.0",
+    "pytest-cov>=6.0,<7.0",
+]
+
+[project.scripts]
+legal-rag-qa = "app.main:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+module-root = "src"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+asyncio_mode = "auto"

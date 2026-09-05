@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+
+# Environment files (contain secrets)
+.env
+!.env.example
+
+# Data & uploads
+data/uploads/
+*.pdf
+*.docx
+
+# BM25 index cache
+*.pkl
+
+# Logs
+logs/
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# UV
+uv.lock

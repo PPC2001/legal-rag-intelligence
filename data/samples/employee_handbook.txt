@@ -1,0 +1,170 @@
+ACME CORPORATION — EMPLOYEE HANDBOOK
+Effective Date: January 1, 2025
+Version 3.2
+
+================================================================================
+SECTION 1: EMPLOYMENT TERMS
+================================================================================
+
+1.1 At-Will Employment
+All employment at Acme Corporation is "at-will," meaning that either the employee
+or the company may terminate the employment relationship at any time, with or
+without cause, and with or without notice, subject to the notice period
+requirements outlined in Section 1.3.
+
+1.2 Probationary Period
+New employees are subject to a probationary period of ninety (90) calendar days
+from the date of hire. During this period, performance will be evaluated, and
+employment may be terminated without the standard notice period. Benefits
+eligibility begins on the first day following successful completion of the
+probationary period.
+
+1.3 Notice Period
+Employees wishing to resign must provide written notice as follows:
+  - Junior staff (Grade 1–3): Thirty (30) calendar days
+  - Mid-level staff (Grade 4–6): Sixty (60) calendar days
+  - Senior staff (Grade 7–9): Ninety (90) calendar days
+  - Executive leadership: One hundred twenty (120) calendar days
+
+The company reserves the right to waive any portion of the notice period or
+provide pay in lieu of notice at its discretion.
+
+1.4 Working Hours
+Standard working hours are Monday through Friday, 9:00 AM to 6:00 PM, with a
+one-hour lunch break. The standard work week is forty (40) hours. Overtime must
+be pre-approved by the employee's direct manager and is compensated at 1.5 times
+the regular hourly rate for non-exempt employees.
+
+================================================================================
+SECTION 2: COMPENSATION & BENEFITS
+================================================================================
+
+2.1 Salary Structure
+Salaries are reviewed annually during the performance review cycle in April.
+Adjustments are based on individual performance ratings, market benchmarking,
+and company financial performance. The company targets the 60th percentile
+of industry compensation for all roles.
+
+2.2 Annual Bonus
+Eligible employees may receive an annual performance bonus of up to:
+  - Grade 1–3: 10% of annual base salary
+  - Grade 4–6: 15% of annual base salary
+  - Grade 7–9: 20% of annual base salary
+  - Executive: 25–40% of annual base salary
+Bonus payments are made in May following the performance year.
+
+2.3 Health Insurance
+The company provides comprehensive health insurance coverage for all full-time
+employees and their dependents. The plan includes:
+  - Medical coverage (PPO and HMO options)
+  - Dental coverage (preventive and major)
+  - Vision coverage (annual eye exam and lens/frame allowance)
+  - Mental health and wellness support
+Employee contribution is 20% of the premium; the company covers 80%.
+Coverage begins on the first of the month following 30 days of employment.
+
+2.4 Retirement Plan
+Acme Corporation offers a 401(k) retirement plan with company matching.
+The company matches 100% of employee contributions up to 4% of salary,
+and 50% of contributions between 4% and 6% of salary, for a maximum
+company match of 5% of annual salary.
+
+================================================================================
+SECTION 3: LEAVE POLICIES
+================================================================================
+
+3.1 Paid Time Off (PTO)
+PTO accrues based on years of service:
+  - 0–2 years: 15 days per year
+  - 3–5 years: 20 days per year
+  - 6–10 years: 25 days per year
+  - 10+ years: 30 days per year
+PTO may be carried over up to a maximum of 5 unused days. Unused PTO beyond
+the carryover limit will be forfeited on December 31st of each year.
+
+3.2 Sick Leave
+Employees receive ten (10) paid sick days per calendar year. Sick leave does
+not carry over year to year. A medical certificate is required for absences
+exceeding three (3) consecutive working days.
+
+3.3 Maternity Leave
+Female employees are entitled to twenty-six (26) weeks of paid maternity leave
+at full salary. Maternity leave may begin up to four (4) weeks before the
+expected delivery date. The employee must provide written notice at least
+sixty (60) days prior to the planned start of maternity leave.
+
+3.4 Paternity Leave
+Male employees are entitled to four (4) weeks of paid paternity leave at full
+salary, to be taken within six (6) months of the child's birth or adoption.
+
+3.5 Bereavement Leave
+Employees are entitled to five (5) paid days of bereavement leave for the death
+of an immediate family member (spouse, parent, child, sibling). Three (3) paid
+days are provided for extended family members.
+
+3.6 Public Holidays
+The company observes twelve (12) public holidays per calendar year, as published
+annually by the Human Resources department.
+
+================================================================================
+SECTION 4: CODE OF CONDUCT
+================================================================================
+
+4.1 Professional Behaviour
+All employees are expected to conduct themselves in a professional manner.
+Harassment, discrimination, bullying, or any form of hostile workplace behaviour
+will not be tolerated and may result in immediate termination.
+
+4.2 Confidentiality
+Employees must maintain strict confidentiality regarding proprietary company
+information, client data, trade secrets, and internal processes. This obligation
+survives the termination of employment for a period of two (2) years.
+
+4.3 Conflict of Interest
+Employees must disclose any personal, financial, or business interests that
+could conflict with their duties at Acme Corporation. Undisclosed conflicts
+may result in disciplinary action, up to and including termination.
+
+4.4 Anti-Bribery and Corruption
+Acme Corporation has a zero-tolerance policy for bribery and corruption.
+Employees must not offer, promise, give, or accept any bribe or improper
+advantage, whether directly or through intermediaries.
+
+================================================================================
+SECTION 5: DISCIPLINARY PROCEDURES
+================================================================================
+
+5.1 Progressive Discipline
+The company follows a progressive discipline approach:
+  Step 1: Verbal warning (documented in personnel file)
+  Step 2: Written warning
+  Step 3: Final written warning with performance improvement plan (PIP)
+  Step 4: Termination of employment
+
+5.2 Grounds for Immediate Termination
+The following offences may result in termination without progressive discipline:
+  - Theft, fraud, or embezzlement
+  - Workplace violence or threats of violence
+  - Gross insubordination
+  - Possession or use of illegal substances on company premises
+  - Serious breach of the confidentiality policy
+  - Sexual harassment
+
+================================================================================
+SECTION 6: GRIEVANCE RESOLUTION
+================================================================================
+
+6.1 Informal Resolution
+Employees are encouraged to first attempt to resolve workplace concerns
+informally by speaking directly with their manager or HR Business Partner.
+
+6.2 Formal Grievance Process
+If informal resolution is unsuccessful, employees may submit a formal
+written grievance to the Head of Human Resources within thirty (30) days
+of the incident. HR will investigate and provide a written response within
+fifteen (15) working days.
+
+6.3 Appeal
+If the employee is dissatisfied with the outcome, they may appeal in writing
+to the Chief People Officer within ten (10) working days of receiving the
+decision. The appeal decision is final and binding.
