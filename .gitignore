@@ -14,6 +14,8 @@ wheels/
 # Environment files (contain secrets)
 .env
 !.env.example
+*.pem
+*.key
 
 # Data & uploads
 data/uploads/
