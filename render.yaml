@@ -1,0 +1,110 @@
+# ─────────────────────────────────────────────────────────────
+#  Legal RAG QA — Render Deployment Blueprint
+#  Documentation: https://render.com/docs/blueprint-spec
+# ─────────────────────────────────────────────────────────────
+services:
+  # ── 1. FastAPI Web API ──────────────────────────────────────
+  - type: web
+    name: legal-rag-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENV
+        value: PROD
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      
+      # Database connection (Paste your Neon PostgreSQL URL in Render Dashboard)
+      - key: DATABASE_URL
+        sync: false
+
+      # LLM Provider & Model Configuration
+      - key: DEFAULT_LLM_PROVIDER
+        value: groq
+      - key: DEFAULT_LLM_MODEL
+        value: qwen/qwen3.8-27b
+      - key: LLM_TEMPERATURE
+        value: "0.0"
+      - key: LLM_MAX_TOKENS
+        value: "1000"
+
+      # API Keys (Set secret keys in Render Dashboard)
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+
+      # Embedding Configuration
+      - key: EMBEDDING_PROVIDER
+        value: google
+      - key: EMBEDDING_MODEL
+        value: models/gemini-embedding-001
+      - key: EMBEDDING_DIMENSIONS
+        value: "768"
+
+      # Retrieval & Reranker Configuration
+      - key: RETRIEVAL_TOP_K
+        value: "5"
+      - key: SPARSE_SEARCH_BACKEND
+        value: postgres
+      - key: ENABLE_RERANKER
+        value: "true"
+      - key: RERANKER_MODEL
+        value: ms-marco-MiniLM-L-12-v2
+
+      # Semantic Cache & Task Broker (connected to internal Redis)
+      - key: ENABLE_SEMANTIC_CACHE
+        value: "true"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: legal-rag-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: legal-rag-redis
+          property: connectionString
+
+  # ── 2. (Optional) Celery Background Ingestion Worker ────────
+  - type: worker
+    name: legal-rag-worker
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    plan: starter
+    region: oregon
+    envVars:
+      - key: ENV
+        value: PROD
+      - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: legal-rag-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: legal-rag-redis
+          property: connectionString
+
+  # ── 3. Managed Redis (Broker & Semantic Cache) ──────────────
+  - type: redis
+    name: legal-rag-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

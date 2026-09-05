@@ -38,6 +38,7 @@ Legal RAG QA answers natural-language questions with **provable citations** (`[S
 - [🚀 1M Scale Architecture (FOSS Stack)](#-1m-scale-architecture-foss-stack)
 - [Testing & Quality Assurance](#-testing--quality-assurance)
 - [Docker Deployment](#-docker-deployment)
+- [☁️ Render Deployment](#️-render-deployment)
 - [License](#-license)
 
 ---
@@ -763,6 +764,66 @@ docker compose ps
 - Non-root user (`appuser`, UID 10001) in application containers.
 - Automatic Docker entrypoint seeding via [`data.sql`](data.sql).
 - Automated healthchecks across API, PostgreSQL, and Redis.
+
+---
+
+## ☁️ Render Deployment
+
+The repository includes a production-ready Render Blueprint specification ([`render.yaml`](render.yaml)) supporting both automated Infrastructure-as-Code (IaC) and manual Docker deployments.
+
+### Method 1: Automated Blueprint Deployment (Recommended)
+
+1. Navigate to your [Render Dashboard](https://dashboard.render.com/).
+2. Click **New +** (top right) ➔ **Blueprint**.
+3. Connect your GitHub repository: `https://github.com/PPC2001/legal-rag-intelligence`.
+4. Render will parse [`render.yaml`](render.yaml) and automatically configure:
+   - **`legal-rag-api`** — FastAPI Docker Web Service (health check: `/api/v1/health`)
+   - **`legal-rag-worker`** — Celery Background Ingestion Worker
+   - **`legal-rag-redis`** — Free Managed Redis instance (used for semantic caching and task queue)
+5. Fill in the required secrets under **Environment Variables**:
+   - `DATABASE_URL`: Your Neon PostgreSQL connection string (`postgresql://user:pass@ep-...neon.tech/vector_db?sslmode=require`)
+   - `GROQ_API_KEY`: Your Groq API key (`gsk_...`)
+   - `GOOGLE_API_KEY`: Your Google Gemini API key (`AIza...`)
+6. Click **Apply**. Render will build the container and deploy your live public URL (e.g. `https://legal-rag-api.onrender.com`).
+
+---
+
+### Method 2: Manual Web Service Deployment
+
+If you want to deploy just the standalone API web service:
+
+1. Click **New +** ➔ **Web Service**.
+2. Select your repository `legal-rag-intelligence`.
+3. Configure the runtime settings:
+   - **Name**: `legal-rag-api`
+   - **Region**: Oregon (US West) or Frankfurt (EU)
+   - **Branch**: `master`
+   - **Runtime**: **Docker**
+   - **Dockerfile Path**: `./Dockerfile`
+   - **Docker Context**: `.`
+4. In **Advanced Settings**:
+   - **Health Check Path**: `/api/v1/health`
+5. Under **Environment Variables**, add:
+   ```env
+   ENV=PROD
+   DEBUG=false
+   LOG_LEVEL=INFO
+   CORS_ORIGINS=["*"]
+   DATABASE_URL=postgresql://user:password@ep-...neon.tech/vector_db?sslmode=require
+   DEFAULT_LLM_PROVIDER=groq
+   DEFAULT_LLM_MODEL=qwen/qwen3.8-27b
+   GROQ_API_KEY=gsk_...
+   GOOGLE_API_KEY=AIza...
+   EMBEDDING_PROVIDER=google
+   EMBEDDING_MODEL=models/gemini-embedding-001
+   EMBEDDING_DIMENSIONS=768
+   SPARSE_SEARCH_BACKEND=postgres
+   ENABLE_RERANKER=true
+   ENABLE_SEMANTIC_CACHE=false
+   ```
+   *(Set `ENABLE_SEMANTIC_CACHE=true` if you attach a Render Redis instance).*
+6. Click **Create Web Service**.
+7. Once deployed, open your live API docs at `https://<your-render-app>.onrender.com/docs`.
 
 ---
 
