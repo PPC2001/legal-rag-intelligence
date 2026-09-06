@@ -7,6 +7,7 @@ guard that refuses to answer when retrieved context is insufficient.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from collections.abc import AsyncIterator
 
@@ -26,6 +27,26 @@ logger = logging.getLogger(__name__)
 # ── Helpers ──────────────────────────────────────────────────────
 
 _REFUSAL = "I cannot find this information in the provided documents."
+
+_GREETING_PATTERNS = [
+    r"^(hi|hello|hey|greetings|hola|namaste|good\s+(morning|afternoon|evening|day))[\s!.,?]*$",
+    r"^(who\s+are\s+you|what\s+are\s+you|what\s+can\s+you\s+do|how\s+can\s+you\s+help|help)[\s!.,?]*$",
+    r"^(how\s+are\s+you|how\'s\s+it\s+going|what\'s\s+up)[\s!.,?]*$",
+]
+
+
+def _is_greeting(query: str) -> bool:
+    """Check if query is a pure conversational greeting or identity question."""
+    cleaned = query.strip().lower()
+    return any(re.match(pattern, cleaned, re.IGNORECASE) for pattern in _GREETING_PATTERNS)
+
+
+_GREETING_RESPONSE = (
+    "Hello! I am LexiRAG, your Legal Document Intelligence Assistant. "
+    "You can upload contracts, policies, agreements, and legal documents into the Knowledge Vault, "
+    "and ask me any question. I will provide precise answers strictly grounded in your files with verified citations.\n\n"
+    "How can I assist your consultation today?"
+)
 
 
 def _format_context(documents: list[Document]) -> str:
@@ -92,6 +113,14 @@ class RAGChain:
           4. Package response and cache result
         """
         start = time.perf_counter()
+
+        # ── Check for conversational greetings ──────────────────
+        if _is_greeting(request.question):
+            return RAGResponse(
+                answer=_GREETING_RESPONSE,
+                sources=[],
+                sufficient_context=True,
+            )
 
         # ── 0. Semantic cache check ──────────────────────────────
         cache = getattr(self, "_cache", None)
@@ -172,6 +201,10 @@ class RAGChain:
 
         Yields individual string tokens as they arrive from the LLM.
         """
+        if _is_greeting(request.question):
+            for token in _GREETING_RESPONSE.split(" "):
+                yield token + " "
+            return
         top_k = self._settings.retrieval_top_k
         retrieved_docs = self._retriever.retrieve(request.question, top_k=top_k)
 

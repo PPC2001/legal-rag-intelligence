@@ -83,8 +83,8 @@ class TestQuestionEndpoints:
     """Verify the /ask endpoint."""
 
     def test_ask_validation_short_question(self, client: TestClient):
-        """Questions shorter than 3 chars should fail validation."""
-        resp = client.post("/api/v1/ask", json={"question": "hi"})
+        """Empty question string should fail validation."""
+        resp = client.post("/api/v1/ask", json={"question": ""})
         assert resp.status_code == 422
 
     def test_ask_validation_missing_question(self, client: TestClient):

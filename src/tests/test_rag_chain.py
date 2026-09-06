@@ -46,6 +46,16 @@ class TestRAGChain:
         assert "cannot find" in response.answer.lower()
         assert response.sources == []
 
+    def test_greeting_response(self):
+        """Conversational greetings should receive a welcoming introduction, not a refusal."""
+        chain = self._make_chain(retrieved_docs=[])
+        for greeting in ["Hi", "Hello!", "hey", "Good morning", "who are you?"]:
+            req = QuestionRequest(question=greeting)
+            res = chain.ask(req)
+            assert res.sufficient_context is True
+            assert "LexiRAG" in res.answer
+            assert res.sources == []
+
     @patch("app.rag.chain.LLMFactory")
     @patch("app.rag.chain.QA_PROMPT")
     def test_successful_answer_with_sources(self, mock_prompt, mock_factory):

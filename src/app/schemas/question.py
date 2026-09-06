@@ -10,7 +10,7 @@ class QuestionRequest(BaseModel):
 
     question: str = Field(
         ...,
-        min_length=3,
+        min_length=1,
         max_length=2000,
         description="Natural-language question to answer from the documents",
         examples=["What is the notice period for junior staff?"],
